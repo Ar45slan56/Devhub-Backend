@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
 const KnowledgeBaseSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -6,12 +6,19 @@ const KnowledgeBaseSchema = new mongoose.Schema({
   description: { type: String, required: true },
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
   },
   category: {
     type: String,
-    enum: ['Setup Guide', 'Best Practices', 'Troubleshooting', 'Security', 'Architecture', 'Development'],
+    enum: [
+      'Setup Guide',
+      'Best Practices',
+      'Troubleshooting',
+      'Security',
+      'Architecture',
+      'Development',
+    ],
     required: true,
   },
   subcategory: { type: String },
@@ -27,7 +34,9 @@ const KnowledgeBaseSchema = new mongoose.Schema({
   //   description: String
   // }],
   contributors: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  related_articles: [{ type: mongoose.Schema.Types.ObjectId, ref: 'KnowledgeBase' }],
+  related_articles: [
+    { type: mongoose.Schema.Types.ObjectId, ref: 'KnowledgeBase' },
+  ],
   version: { type: String },
   last_reviewed: { type: Date },
   // reviewed_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -36,15 +45,17 @@ const KnowledgeBaseSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['Draft', 'Published', 'Archived', 'Under Review'],
-    default: 'Draft'
+    default: 'Draft',
   },
-  attachments: [{
-    url: String,
-    filename: String,
-    type: String
-  }],
+  attachments: [
+    {
+      url: String,
+      filename: String,
+      type: String,
+    },
+  ],
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("KnowledgeBase", KnowledgeBaseSchema);
+module.exports = mongoose.model('KnowledgeBase', KnowledgeBaseSchema);
