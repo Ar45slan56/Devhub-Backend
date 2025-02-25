@@ -1,16 +1,38 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const BugReportSchema = new mongoose.Schema({
   title: { type: String, required: true },
   content: { type: String, required: true },
-  user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  priority: { type: String, enum: ['Low', 'Medium', 'High', 'Critical'], default: 'Medium' }, // enum based on the priority
-  status: { type: String, enum: ['Open', 'In Progress', 'Under Review', 'Resolved', 'Closed'], default: 'Open' }, // enum based on the status
-  category: { type: String, enum: ['Bug', 'Feature Request', 'Performance', 'Security', 'Documentation'], required: true }, // enum based on the category
+  user_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  priority: {
+    type: String,
+    enum: ['Low', 'Medium', 'High', 'Critical'],
+    default: 'Medium',
+  }, // enum based on the priority
+  status: {
+    type: String,
+    enum: ['Open', 'In Progress', 'Under Review', 'Resolved', 'Closed'],
+    default: 'Open',
+  }, // enum based on the status
+  category: {
+    type: String,
+    enum: [
+      'Bug',
+      'Feature Request',
+      'Performance',
+      'Security',
+      'Documentation',
+    ],
+    required: true,
+  }, // enum based on the category
   environment: {
     os: String,
     browser: String,
-    version: String
+    version: String,
   },
   reproduction_steps: [String],
   expected_behavior: { type: String },
@@ -20,11 +42,13 @@ const BugReportSchema = new mongoose.Schema({
   //   code: String,
   //   description: String
   // }],
-  attachments: [{
-    url: String,
-    filename: String,
-    type: String
-  }],
+  attachments: [
+    {
+      url: String,
+      filename: String,
+      type: String,
+    },
+  ],
   comments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Comment' }],
   watchers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   related_issues: [{ type: mongoose.Schema.Types.ObjectId, ref: 'BugReport' }],
@@ -36,4 +60,4 @@ const BugReportSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now },
 });
 
-export default mongoose.model('BugReport', BugReportSchema);
+module.exports = mongoose.model('BugReport', BugReportSchema);
