@@ -8,9 +8,11 @@ const path = require('path');
 const swaggerJsDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const cors = require('cors');
+const http = require('http');
 
 const connectDB = require('./config/Database');
 const passport = require('./config/Passport');
+const { WebSocketService } = require('./service');
 
 // Routes imports
 const Router = require('./routes/index');
@@ -19,69 +21,109 @@ const SwagerTestRoute = require('./routes/SwagerTestRoute');
 const app = express();
 connectDB();
 
-// Middleware setup
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'Qwerty@123',
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+// Create HTTP server
+const server = http.createServer(app);
 
+// Initialize WebSocket service
+const io = WebSocketService.initialize(server);
+
+// Middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'devhub_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Initialize passport
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.json());
-// Enable CORS
-app.use(cors());
 
-// Morgan logging setup
-const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {
-  flags: 'a',
-});
-app.use(morgan('combined', { stream: logStream }));
-app.use(morgan('dev'));
+// Logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  // Create a log directory if it doesn't exist
+  const logDirectory = path.join(__dirname, 'logs');
+  fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
 
-// Swagger setup
+  // Create a write stream for access logs
+  const accessLogStream = fs.createWriteStream(
+    path.join(logDirectory, 'access.log'),
+    { flags: 'a' }
+  );
+
+  app.use(morgan('combined', { stream: accessLogStream }));
+}
+
+// Swagger configuration
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
       title: 'DevHub API',
       version: '1.0.0',
-      description: 'API documentation for DevHub',
+      description: 'DevHub API Documentation',
       contact: {
-        name: 'Usama Aamir',
-        url: 'https://github.com/usama7365/Devhub-Backend',
+        name: 'DevHub Team'
       },
-    },
-    servers: [{ url: 'http://localhost:8080' }],
+      servers: [
+        {
+          url: process.env.BASE_URL || 'http://localhost:5000'
+        }
+      ]
+    }
   },
-  apis: ['./routes/*.js'],
+  apis: ['./routes/*.js', './models/*.js']
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
-// Routes setup
+// Routes
+app.use('/api', Router);
+app.use('/api/swagger-test', SwagerTestRoute);
 
-Router(app);
-app.use('/v1/api', SwagerTestRoute);
-
-app.get('/', (req, res) => {
-  console.log('Api');
-  res.status(200).json({ msg: 'Node server is running' });
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production'
+      ? 'Server Error'
+      : err.message
+  });
 });
 
-app.use((req, res) => {
-  res.status(404).json({ success: false, msg: 'Page not found' });
+// Handle 404 routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'Route not found'
+  });
 });
-
-const PORT = process.env.PORT || 8081;
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`.bold.cyan);
-  console.log(
-    `Swagger Docs available at http://localhost:${PORT}/api-docs`.bold.yellow
-  );
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`.yellow.bold);
+  console.log(`API Documentation available at http://localhost:${PORT}/api-docs`.blue.bold);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.log(`Error: ${err.message}`.red);
+  // Close server & exit process
+  server.close(() => process.exit(1));
 });
