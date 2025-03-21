@@ -13,6 +13,7 @@ const {
   RESOURCE_ERRORS,
   USER_ERRORS,
 } = require('./messages/errors');
+const { AUTH_SUCCESS } = require('./messages/success');
 const { USER_VALIDATION, BLOG_VALIDATION } = require('./validation/schemas');
 
 module.exports = {
@@ -23,6 +24,7 @@ module.exports = {
   AUTH_ERRORS,
   RESOURCE_ERRORS,
   USER_ERRORS,
+  AUTH_SUCCESS,
 
   USER_VALIDATION,
   BLOG_VALIDATION,
