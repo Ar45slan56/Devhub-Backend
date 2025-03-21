@@ -40,15 +40,17 @@ const UserSchema = new mongoose.Schema(
     interests: [{ type: String }], // Array of user interests
     reputation: { type: Number, default: 0, min: 0 }, // User reputation according the the upvotes and badges and verified answers
     last_login: { type: Date },
-    is_active: { type: Boolean, default: true }, // user server socket --> will be used to check if the user is online or not
+    is_online: { type: Boolean, default: true }, // user server socket --> will be used to check if the user is online or not
     refresh_token: { type: String },
     fcm_token: { type: String }, // firebase notification base token
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // will be changed to the mini schema
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // will be changed to the mini schema
     skills: [{ type: String }], // will be changed to the mini schema
     is_deleted: { type: Boolean, default: false }, // soft delete
-    isEmailVerified: { type: Boolean, default: false },
-    otp: { type: String, expires: 300 }, // otp will expire in 5 minutes
+    isEmailVerified: { type: Boolean, default: false },  // will be used to check if the user email is verified or not
+    emailVerificationOTP: { type: String, expires: 300 }, // otp will expire in 5 minutes
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date }
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
